@@ -1,8 +1,13 @@
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import Account from "./pages/Account";
+
 function App() {
   return (
-    <h1 className="text-3xl font-bold underline text-red-500 bg-yellow-200">
-      Hello world!
-    </h1>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Account />} />
+      </Routes>
+    </Router>
   );
 }
 
