@@ -1,56 +1,102 @@
-import { useState } from "react";
+import React, { useState } from 'react';
+import { MapPin, ShoppingCart, Calendar, ShoppingBag, CreditCard, User } from 'lucide-react';
 
-export default function Account() {
+const Account = () => {
   const [darkMode, setDarkMode] = useState(true);
-
+  
   return (
-    <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"} p-6`}>
-      {/* Profile Section */}
-      <div className="flex flex-col items-center space-y-2">
-        <img
-          src="https://placehold.co/100x100" // replace with Firebase storage later
-          alt="profile"
-          className="w-24 h-24 rounded-full object-cover"
-        />
-        <p className="bg-gray-700 px-3 py-1 rounded-full text-sm">
-          Lucknow, Uttar Pradesh
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-900 text-white pb-20">
+      
+      {/* Main Content */}
+      <div className="flex flex-col items-center pt-12 px-6">
+        
+        {/* Profile Image */}
+        <div className="w-28 h-28 rounded-full overflow-hidden mb-8">
+          <img 
+            src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=200&h=200&fit=crop&crop=face"
+            alt="Wallaby profile"
+            className="w-full h-full object-cover"
+          />
+        </div>
 
-      {/* Seller Section */}
-      <div className="bg-green-700 text-white rounded-2xl p-4 my-6 flex flex-col items-center space-y-2">
-        <h2 className="font-semibold">DesiMade</h2>
-        <p className="text-sm text-center">
-          You’re minutes away from sharing your creations with your community
-        </p>
-        <button className="bg-green-500 px-4 py-2 rounded-xl mt-2">
-          Create Your Seller Account
+        {/* Location */}
+        <div className="flex items-center text-gray-300 mb-12">
+          <MapPin size={18} className="mr-2" />
+          <span className="text-base">Lucknow, Uttar Pradesh</span>
+        </div>
+
+        {/* Sell on Wallaby Card */}
+        <div className="w-full max-w-sm bg-emerald-600 rounded-2xl p-6 mb-12 relative">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <h3 className="text-white font-semibold text-xl mb-3">DesiMade</h3>
+              <p className="text-emerald-100 text-sm leading-relaxed mb-6">
+                You're minutes away from sharing your creations with your community
+              </p>
+              <button className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium py-3 px-6 rounded-xl transition-colors">
+                Create Your Seller Account
+              </button>
+            </div>
+            <div className="ml-4">
+              <ShoppingCart className="w-16 h-16 text-white" strokeWidth={1.5} />
+            </div>
+          </div>
+        </div>
+
+        {/* Dark Mode Toggle */}
+        <div className="w-full max-w-sm mb-16">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-white font-medium text-lg mb-1">Dark Mode</h4>
+              <p className="text-gray-400 text-sm">Use high contrast colours</p>
+            </div>
+            <button 
+              onClick={() => setDarkMode(!darkMode)}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                darkMode ? 'bg-emerald-500' : 'bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                  darkMode ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Create Account / Log In */}
+        <button className="text-emerald-400 hover:text-emerald-300 font-medium text-lg transition-colors">
+          Create Account / Log In
         </button>
       </div>
 
-      {/* Dark Mode Toggle */}
-      <div className="flex justify-between items-center bg-gray-800 p-4 rounded-xl">
-        <span className="text-sm">Dark Mode</span>
-        <input
-          type="checkbox"
-          checked={darkMode}
-          onChange={() => setDarkMode(!darkMode)}
-          className="w-6 h-6"
-        />
-      </div>
-
-      {/* Auth */}
-      <div className="mt-6 text-center text-green-400">
-        <button>Create Account / Log In</button>
-      </div>
-
-      {/* Bottom Nav */}
-      <div className="fixed bottom-0 left-0 right-0 flex justify-around bg-gray-800 py-3 text-sm">
-        <button>Markets</button>
-        <button>Shop</button>
-        <button>Checkout</button>
-        <button className="text-green-400">Account</button>
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-gray-800">
+        <div className="max-w-sm mx-auto flex items-center justify-around py-3">
+          <button className="flex flex-col items-center py-2 text-gray-400 hover:text-white transition-colors">
+            <Calendar size={24} />
+            <span className="text-xs mt-1">Markets</span>
+          </button>
+          
+          <button className="flex flex-col items-center py-2 text-gray-400 hover:text-white transition-colors">
+            <ShoppingBag size={24} />
+            <span className="text-xs mt-1">Shop</span>
+          </button>
+          
+          <button className="flex flex-col items-center py-2 text-gray-400 hover:text-white transition-colors">
+            <CreditCard size={24} />
+            <span className="text-xs mt-1">Checkout</span>
+          </button>
+          
+          <button className="flex flex-col items-center py-2 text-emerald-400">
+            <User size={24} />
+            <span className="text-xs mt-1">Account</span>
+          </button>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default Account;

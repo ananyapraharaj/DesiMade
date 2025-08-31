@@ -1,7 +1,14 @@
-export default function App() {
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import Account from "./pages/Account";
+
+function App() {
   return (
-    <div className="text-3xl font-bold text-blue-500 bg-green-500 p-4">
-      Hello Tailwind + React 🚀
-    </div>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<Account />} />
+      </Routes>
+    </Router>
+  );
 }
+
+export default App;
