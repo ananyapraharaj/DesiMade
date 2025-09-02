@@ -29,6 +29,8 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -52,12 +54,11 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
 
       // ✅ Save location in "location" collection
       await setDoc(doc(db, "location", user.uid), {
+        city,
+        state,
         lat: location.lat,
         lng: location.lng,
-        createdAt: serverTimestamp(),
-        city: city,
-        state: state
-
+        createdAt: serverTimestamp()
       });
 
       console.log("Account created:", user);
@@ -163,6 +164,36 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 placeholder="Enter your password"
+                disabled={loading}
+              />
+            </div>
+
+            {/* City */}
+            <div>
+              <label className="block text-white text-sm font-medium mb-2">
+                City
+              </label>
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                placeholder="Enter your city"
+                disabled={loading}
+              />
+            </div>
+
+            {/* State */}
+            <div>
+              <label className="block text-white text-sm font-medium mb-2">
+                State
+              </label>
+              <input
+                type="text"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                placeholder="Enter your state"
                 disabled={loading}
               />
             </div>
