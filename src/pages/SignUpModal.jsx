@@ -1,8 +1,29 @@
 import React, { useState } from 'react';
 import { X, Edit3 } from 'lucide-react';
-import { auth } from '../firebase'; 
+import { auth, db } from '../firebase'; 
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
+// 🔹 Helper function to get user location
+const getUserLocation = () => {
+  return new Promise((resolve, reject) => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          reject(error);
+        }
+      );
+    } else {
+      reject(new Error("Geolocation not supported"));
+    }
+  });
+};
 
 const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   const [firstName, setFirstName] = useState('');
@@ -13,24 +34,47 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   if (!isOpen) return null;
 
   const handleCreateAccount = async () => {
-    // Handle account creation logic here
+    setLoading(true);
     try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        console.log("Account created:", userCredential.user);
-        alert(`Welcome ${firstName}! Account created successfully`);
-      } catch (error) {
-        console.error("Error creating account:", error.message);
-        alert(error.message);
-      }finally{
-        setLoading(false);
-      }
+      // ✅ Ask for location
+      const location = await getUserLocation();
+
+      // ✅ Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // ✅ Save user basic details in "users" collection
+      await setDoc(doc(db, "users", user.uid), {
+        firstName,
+        email,
+        createdAt: serverTimestamp()
+      });
+
+      // ✅ Save location in "location" collection
+      await setDoc(doc(db, "location", user.uid), {
+        lat: location.lat,
+        lng: location.lng,
+        createdAt: serverTimestamp(),
+        city: city,
+        state: state
+
+      });
+
+      console.log("Account created:", user);
+      alert(`Welcome ${firstName}! Account created successfully`);
+      onClose();
+    } catch (error) {
+      console.error("Error creating account:", error.message);
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogin = async () => {
-
-    if(!email || !password){
-        alert("Please enter email and password");
-        return;
+    if (!email || !password) {
+      alert("Please enter email and password");
+      return;
     }
     setLoading(true);
     try {
@@ -41,8 +85,8 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     } catch (error) {
       console.error("Login error:", error.message);
       alert(error.message);
-    } finally{
-        setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,9 +171,11 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
           {/* Already have account */}
           <div className="text-center mt-8 mb-6">
             <span className="text-gray-400">Already have an account? </span>
-            <button onClick={onSwitchToLogin}
-            disabled={loading}
-            className="text-emerald-400 hover:text-emerald-300 font-medium">
+            <button 
+              onClick={onSwitchToLogin}
+              disabled={loading}
+              className="text-emerald-400 hover:text-emerald-300 font-medium"
+            >
               Log In
             </button>
           </div>
@@ -141,7 +187,6 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl transition-colors"
           >
             {loading ? 'Creating Account...' : 'Create Account'}
-         
           </button>
         </div>
       </div>
