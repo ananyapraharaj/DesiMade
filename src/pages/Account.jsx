@@ -1,8 +1,22 @@
 import React, { useState } from 'react';
 import { MapPin, ShoppingCart, Calendar, ShoppingBag, CreditCard, User } from 'lucide-react';
+import SignUpModal from './SignUpModal';
+import LoginModal from './LoginModal';
 
 const Account = () => {
   const [darkMode, setDarkMode] = useState(true);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const handleSwitchToLogin = () => {
+    setShowSignUpModal(false);
+    setShowLoginModal(true);
+  };
+
+  const handleSwitchToSignUp = () => {
+    setShowLoginModal(false);
+    setShowSignUpModal(true);
+  };
   
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-20">
@@ -66,7 +80,7 @@ const Account = () => {
         </div>
 
         {/* Create Account / Log In */}
-        <button className="text-emerald-400 hover:text-emerald-300 font-medium text-lg transition-colors">
+        <button onClick={() => setShowSignUpModal(true)} className="text-emerald-400 hover:text-emerald-300 font-medium text-lg transition-colors">
           Create Account / Log In
         </button>
       </div>
@@ -95,6 +109,18 @@ const Account = () => {
           </button>
         </div>
       </div>
+      {/* SignUp Modal */}
+      <SignUpModal 
+        isOpen={showSignUpModal} 
+        onClose={() => setShowSignUpModal(false)} 
+        onSwitchToLogin={handleSwitchToLogin}
+      />
+      {/* Login Modal */}
+      <LoginModal
+      isOpen={showLoginModal}
+      onClose={() => setShowLoginModal(false)}
+      onSwitchToSignUp={handleSwitchToSignUp}
+      />
     </div>
   );
 };
