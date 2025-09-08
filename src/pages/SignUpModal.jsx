@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Edit3 } from 'lucide-react';
 import { auth, db } from '../firebase'; 
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 // 🔹 Helper function to get user location
@@ -25,7 +25,7 @@ const getUserLocation = () => {
   });
 };
 
-const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
+const SignUpModal = ({ isOpen, onClose, onSwitchToLogin, onAuthSuccess }) => {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,10 +36,21 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   if (!isOpen) return null;
 
   const handleCreateAccount = async () => {
+    if (!firstName || !email || !password || !city || !state) {
+      alert("Please fill in all fields");
+      return;
+    }
+
     setLoading(true);
     try {
       // ✅ Ask for location
-      const location = await getUserLocation();
+      let location = { lat: null, lng: null };
+      try {
+        location = await getUserLocation();
+      } catch (locError) {
+        console.warn("Could not get user location:", locError);
+        // Continue without location if user denies permission
+      }
 
       // ✅ Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -49,42 +60,24 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
       await setDoc(doc(db, "users", user.uid), {
         firstName,
         email,
-        createdAt: serverTimestamp()
-      });
-
-      // ✅ Save location in "location" collection
-      await setDoc(doc(db, "location", user.uid), {
         city,
         state,
         lat: location.lat,
         lng: location.lng,
-        createdAt: serverTimestamp()
+        isBusiness: null, // Will be set when they choose business/buyer
+        userType: null,   // Will be set when they choose business/buyer
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
 
       console.log("Account created:", user);
       alert(`Welcome ${firstName}! Account created successfully`);
-      onClose();
+      
+      // ✅ Call the success handler to show business profile modal
+      onAuthSuccess();
+      
     } catch (error) {
       console.error("Error creating account:", error.message);
-      alert(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogin = async () => {
-    if (!email || !password) {
-      alert("Please enter email and password");
-      return;
-    }
-    setLoading(true);
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("Logged in:", userCredential.user);
-      alert(`Welcome back ${firstName || userCredential.user.email}!`);
-      onClose();
-    } catch (error) {
-      console.error("Login error:", error.message);
       alert(error.message);
     } finally {
       setLoading(false);
@@ -135,6 +128,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 placeholder="Enter your first name"
                 disabled={loading}
+                required
               />
             </div>
 
@@ -150,6 +144,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 placeholder="Enter your email"
                 disabled={loading}
+                required
               />
             </div>
 
@@ -165,6 +160,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 placeholder="Enter your password"
                 disabled={loading}
+                required
               />
             </div>
 
@@ -180,6 +176,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 placeholder="Enter your city"
                 disabled={loading}
+                required
               />
             </div>
 
@@ -195,6 +192,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 placeholder="Enter your state"
                 disabled={loading}
+                required
               />
             </div>
           </div>
@@ -205,7 +203,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
             <button 
               onClick={onSwitchToLogin}
               disabled={loading}
-              className="text-emerald-400 hover:text-emerald-300 font-medium"
+              className="text-emerald-400 hover:text-emerald-300 font-medium disabled:opacity-50"
             >
               Log In
             </button>
@@ -215,7 +213,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
           <button
             onClick={handleCreateAccount}
             disabled={loading}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl transition-colors"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Creating Account...' : 'Create Account'}
           </button>

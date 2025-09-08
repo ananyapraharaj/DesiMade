@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { MapPin, ShoppingCart, Calendar, ShoppingBag, CreditCard, User } from 'lucide-react';
 import SignUpModal from './SignUpModal';
 import LoginModal from './LoginModal';
+import BusinessProfileModal from './BusinessProfileModal';
 
 const Account = () => {
   const [darkMode, setDarkMode] = useState(true);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showBusinessProfile, setShowBusinessProfile] = useState(false);
 
   const handleSwitchToLogin = () => {
     setShowSignUpModal(false);
@@ -16,6 +18,98 @@ const Account = () => {
   const handleSwitchToSignUp = () => {
     setShowLoginModal(false);
     setShowSignUpModal(true);
+  };
+
+  // ✅ Handle successful authentication - show business profile modal
+  const handleAuthSuccess = () => {
+    setShowSignUpModal(false);
+    setShowLoginModal(false);
+    setShowBusinessProfile(true);
+  };
+
+  // ✅ Handle business profile completion
+  const handleBusinessProfileComplete = async (formData, profileImage, coverImage) => {
+    try {
+      const { auth, db, storage } = await import('../firebase');
+      const { doc, updateDoc, setDoc } = await import('firebase/firestore');
+      const { ref, uploadString, getDownloadURL } = await import('firebase/storage');
+      
+      const user = auth.currentUser;
+      if (!user) return;
+
+      // Upload images to Firebase Storage if provided
+      let profileImageUrl = null;
+      let coverImageUrl = null;
+
+      if (profileImage) {
+        const profileImageRef = ref(storage, `businesses/${user.uid}/profile`);
+        await uploadString(profileImageRef, profileImage, 'data_url');
+        profileImageUrl = await getDownloadURL(profileImageRef);
+      }
+
+      if (coverImage) {
+        const coverImageRef = ref(storage, `businesses/${user.uid}/cover`);
+        await uploadString(coverImageRef, coverImage, 'data_url');
+        coverImageUrl = await getDownloadURL(coverImageRef);
+      }
+
+      // ✅ Update user document to mark as business
+      await updateDoc(doc(db, "users", user.uid), {
+        isBusiness: true,
+        userType: 'business'
+      });
+
+      // ✅ Create business profile document
+      await setDoc(doc(db, "businessProfiles", user.uid), {
+        businessName: formData.businessName,
+        aboutBusiness: formData.aboutBusiness,
+        location: formData.location,
+        profileImage: profileImageUrl,
+        coverImage: coverImageUrl,
+        ownerId: user.uid,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      console.log("Business profile created successfully");
+      setShowBusinessProfile(false);
+      // Navigate to business dashboard or home
+      
+    } catch (error) {
+      console.error('Error creating business profile:', error);
+      alert('Error creating business profile. Please try again.');
+    }
+  };
+
+  // ✅ Handle buyer mode selection
+  const handleBuyerMode = async () => {
+    try {
+      const { auth, db } = await import('../firebase');
+      const { doc, updateDoc } = await import('firebase/firestore');
+      
+      const user = auth.currentUser;
+      if (!user) return;
+
+      // ✅ Update user document to mark as buyer/customer
+      await updateDoc(doc(db, "users", user.uid), {
+        isBusiness: false,
+        userType: 'customer'
+      });
+
+      console.log("User set as customer/buyer");
+      setShowBusinessProfile(false);
+      // Navigate to customer/buyer interface
+      
+    } catch (error) {
+      console.error('Error setting buyer mode:', error);
+      alert('Error setting buyer mode. Please try again.');
+    }
+  };
+
+  const handleBusinessProfileClose = () => {
+    setShowBusinessProfile(false);
+    // Maybe redirect to home or show another modal
   };
   
   return (
@@ -47,7 +141,10 @@ const Account = () => {
               <p className="text-emerald-100 text-sm leading-relaxed mb-6">
                 You're minutes away from sharing your creations with your community
               </p>
-              <button className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium py-3 px-6 rounded-xl transition-colors">
+              <button 
+                onClick={() => setShowSignUpModal(true)}
+                className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium py-3 px-6 rounded-xl transition-colors"
+              >
                 Create Your Seller Account
               </button>
             </div>
@@ -109,17 +206,27 @@ const Account = () => {
           </button>
         </div>
       </div>
-      {/* SignUp Modal */}
+
+      {/* ✅ All Modals */}
       <SignUpModal 
         isOpen={showSignUpModal} 
         onClose={() => setShowSignUpModal(false)} 
         onSwitchToLogin={handleSwitchToLogin}
+        onAuthSuccess={handleAuthSuccess}
       />
-      {/* Login Modal */}
+      
       <LoginModal
-      isOpen={showLoginModal}
-      onClose={() => setShowLoginModal(false)}
-      onSwitchToSignUp={handleSwitchToSignUp}
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSwitchToSignUp={handleSwitchToSignUp}
+        onAuthSuccess={handleAuthSuccess}
+      />
+
+      <BusinessProfileModal
+        isOpen={showBusinessProfile}
+        onClose={handleBusinessProfileClose}
+        onContinue={handleBusinessProfileComplete}
+        onBuyerMode={handleBuyerMode}
       />
     </div>
   );
