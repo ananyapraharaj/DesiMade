@@ -36,7 +36,6 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin, onAuthSuccess }) => {
 
   if (!isOpen) return null;
 
-  // ✅ Handle image upload + compression to Base64
   const handleImageUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -105,6 +104,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin, onAuthSuccess }) => {
 
     setLoading(true);
     try {
+      // Get user location
       let location = { lat: null, lng: null };
       try {
         location = await getUserLocation();
@@ -112,11 +112,11 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin, onAuthSuccess }) => {
         console.warn("Could not get user location:", locError);
       }
 
-      // ✅ Create user
+      // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       const user = userCredential.user;
 
-      // ✅ Save to Firestore (profileImage as Base64 string)
+      // Save profile image to Firebase Storage if provided
       await setDoc(doc(db, "users", user.uid), {
         firstName: firstName.trim(),
         email: email.trim(),
@@ -131,18 +131,27 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin, onAuthSuccess }) => {
         updatedAt: serverTimestamp()
       });
 
-      alert(`Welcome ${firstName}! Account created successfully`);
+      // Save user basic details in "users" collection
+      
 
+      console.log("Account created:", user);
+      alert(`Welcome ${firstName}! Account created successfully`);
+      
+      // Reset form
       setFirstName('');
       setEmail('');
       setPassword('');
       setCity('');
       setState('');
       setProfileImage(null);
-
+      
+      // Call the success handler to show business profile modal
       onAuthSuccess();
+      
     } catch (error) {
       console.error("Error creating account:", error.message);
+      
+      // Show user-friendly error messages
       if (error.code === 'auth/email-already-in-use') {
         alert('This email is already registered. Try logging in instead.');
       } else if (error.code === 'auth/invalid-email') {
@@ -198,8 +207,90 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin, onAuthSuccess }) => {
           </div>
 
           {/* Form Fields */}
-          {/* Same as before... */}
+          <div className="space-y-6">
+            {/* First Name */}
+            <div>
+              <label className="block text-white text-sm font-medium mb-2">
+                First Name *
+              </label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                placeholder="Enter your first name"
+                disabled={loading}
+                required
+              />
+            </div>
 
+            {/* Email */}
+            <div>
+              <label className="block text-white text-sm font-medium mb-2">
+                Email *
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                placeholder="Enter your email"
+                disabled={loading}
+                required
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-white text-sm font-medium mb-2">
+                Password *
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                placeholder="Enter your password (min 6 chars)"
+                disabled={loading}
+                required
+                minLength={6}
+              />
+            </div>
+
+            {/* City */}
+            <div>
+              <label className="block text-white text-sm font-medium mb-2">
+                City *
+              </label>
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                placeholder="Enter your city"
+                disabled={loading}
+                required
+              />
+            </div>
+
+            {/* State */}
+            <div>
+              <label className="block text-white text-sm font-medium mb-2">
+                State *
+              </label>
+              <input
+                type="text"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                placeholder="Enter your state"
+                disabled={loading}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Already have account */}
           <div className="text-center mt-8 mb-6">
             <span className="text-gray-400">Already have an account? </span>
             <button 
@@ -211,6 +302,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin, onAuthSuccess }) => {
             </button>
           </div>
 
+          {/* Create Account Button */}
           <button
             onClick={handleCreateAccount}
             disabled={loading}
